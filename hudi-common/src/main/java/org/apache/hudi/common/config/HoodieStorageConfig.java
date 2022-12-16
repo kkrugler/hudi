@@ -16,12 +16,8 @@
  * limitations under the License.
  */
 
-package org.apache.hudi.config;
+package org.apache.hudi.common.config;
 
-import org.apache.hudi.common.config.ConfigClassProperty;
-import org.apache.hudi.common.config.ConfigGroups;
-import org.apache.hudi.common.config.ConfigProperty;
-import org.apache.hudi.common.config.HoodieConfig;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import javax.annotation.concurrent.Immutable;
@@ -114,9 +110,9 @@ public class HoodieStorageConfig extends HoodieConfig {
       .defaultValue(CompressionCodecName.GZIP.name())
       .withDocumentation("Compression Codec for parquet files");
 
-  public static final ConfigProperty<String> PARQUET_DICTIONARY_ENABLED = ConfigProperty
+  public static final ConfigProperty<Boolean> PARQUET_DICTIONARY_ENABLED = ConfigProperty
       .key("hoodie.parquet.dictionary.enabled")
-      .defaultValue("true")
+      .defaultValue(true)
       .withDocumentation("Whether to use dictionary encoding");
 
   public static final ConfigProperty<String> PARQUET_WRITE_LEGACY_FORMAT_ENABLED = ConfigProperty
