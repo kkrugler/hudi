@@ -61,9 +61,11 @@ public class FlinkWriteClients {
   /**
    * Creates the Flink write client.
    *
-   * <p>This expects to be used by the driver, the client can then send requests for files view.
+   * <p>
+   * This expects to be used by the driver, the client can then send requests for files view.
    *
-   * <p>The task context supplier is a constant: the write token is always '0-1-0'.
+   * <p>
+   * The task context supplier is a constant: the write token is always '0-1-0'.
    */
   @SuppressWarnings("rawtypes")
   public static HoodieFlinkWriteClient createWriteClient(Configuration conf) throws IOException {
@@ -74,17 +76,12 @@ public class FlinkWriteClients {
     // create the filesystem view storage properties for client
     final FileSystemViewStorageConfig viewStorageConfig = writeConfig.getViewStorageConfig();
     // rebuild the view storage config with simplified options.
-    FileSystemViewStorageConfig rebuilt = FileSystemViewStorageConfig.newBuilder()
-        .withStorageType(viewStorageConfig.getStorageType())
-        .withRemoteServerHost(viewStorageConfig.getRemoteViewServerHost())
-        .withRemoteServerPort(viewStorageConfig.getRemoteViewServerPort())
-        .withRemoteTimelineClientTimeoutSecs(viewStorageConfig.getRemoteTimelineClientTimeoutSecs())
-        .withRemoteTimelineClientRetry(viewStorageConfig.isRemoteTimelineClientRetryEnabled())
-        .withRemoteTimelineClientMaxRetryNumbers(viewStorageConfig.getRemoteTimelineClientMaxRetryNumbers())
+    FileSystemViewStorageConfig rebuilt = FileSystemViewStorageConfig.newBuilder().withStorageType(viewStorageConfig.getStorageType()).withRemoteServerHost(viewStorageConfig.getRemoteViewServerHost())
+        .withRemoteServerPort(viewStorageConfig.getRemoteViewServerPort()).withRemoteTimelineClientTimeoutSecs(viewStorageConfig.getRemoteTimelineClientTimeoutSecs())
+        .withRemoteTimelineClientRetry(viewStorageConfig.isRemoteTimelineClientRetryEnabled()).withRemoteTimelineClientMaxRetryNumbers(viewStorageConfig.getRemoteTimelineClientMaxRetryNumbers())
         .withRemoteTimelineInitialRetryIntervalMs(viewStorageConfig.getRemoteTimelineInitialRetryIntervalMs())
         .withRemoteTimelineClientMaxRetryIntervalMs(viewStorageConfig.getRemoteTimelineClientMaxRetryIntervalMs())
-        .withRemoteTimelineClientRetryExceptions(viewStorageConfig.getRemoteTimelineClientRetryExceptions())
-        .build();
+        .withRemoteTimelineClientRetryExceptions(viewStorageConfig.getRemoteTimelineClientRetryExceptions()).build();
     ViewStorageProperties.createProperties(conf.getString(FlinkOptions.PATH), rebuilt, conf);
     return writeClient;
   }
@@ -92,12 +89,14 @@ public class FlinkWriteClients {
   /**
    * Creates the Flink write client.
    *
-   * <p>This expects to be used by the driver, the client can then send requests for files view.
+   * <p>
+   * This expects to be used by the driver, the client can then send requests for files view.
    *
-   * <p>The task context supplier is a constant: the write token is always '0-1-0'.
+   * <p>
+   * The task context supplier is a constant: the write token is always '0-1-0'.
    *
-   * <p>Note: different with {@link #createWriteClient}, the fs view storage options are set into the given
-   * configuration {@code conf}.
+   * <p>
+   * Note: different with {@link #createWriteClient}, the fs view storage options are set into the given configuration {@code conf}.
    */
   @SuppressWarnings("rawtypes")
   public static HoodieFlinkWriteClient createWriteClientV2(Configuration conf) {
@@ -116,7 +115,8 @@ public class FlinkWriteClients {
   /**
    * Creates the Flink write client.
    *
-   * <p>This expects to be used by client, the driver should start an embedded timeline server.
+   * <p>
+   * This expects to be used by client, the driver should start an embedded timeline server.
    */
   @SuppressWarnings("rawtypes")
   public static HoodieFlinkWriteClient createWriteClient(Configuration conf, RuntimeContext runtimeContext) {
@@ -126,15 +126,12 @@ public class FlinkWriteClients {
   /**
    * Creates the Flink write client.
    *
-   * <p>This expects to be used by client, set flag {@code loadFsViewStorageConfig} to use
-   * remote filesystem view storage config, or an in-memory filesystem view storage is used.
+   * <p>
+   * This expects to be used by client, set flag {@code loadFsViewStorageConfig} to use remote filesystem view storage config, or an in-memory filesystem view storage is used.
    */
   @SuppressWarnings("rawtypes")
   public static HoodieFlinkWriteClient createWriteClient(Configuration conf, RuntimeContext runtimeContext, boolean loadFsViewStorageConfig) {
-    HoodieFlinkEngineContext context =
-        new HoodieFlinkEngineContext(
-            new SerializableConfiguration(HadoopConfigurations.getHadoopConf(conf)),
-            new FlinkTaskContextSupplier(runtimeContext));
+    HoodieFlinkEngineContext context = new HoodieFlinkEngineContext(new SerializableConfiguration(HadoopConfigurations.getHadoopConf(conf)), new FlinkTaskContextSupplier(runtimeContext));
 
     HoodieWriteConfig writeConfig = getHoodieClientConfig(conf, loadFsViewStorageConfig);
     return new HoodieFlinkWriteClient<>(context, writeConfig);
@@ -151,85 +148,47 @@ public class FlinkWriteClients {
     return getHoodieClientConfig(conf, false, loadFsViewStorageConfig);
   }
 
-  public static HoodieWriteConfig getHoodieClientConfig(
-      Configuration conf,
-      boolean enableEmbeddedTimelineService,
-      boolean loadFsViewStorageConfig) {
-    HoodieWriteConfig.Builder builder =
-        HoodieWriteConfig.newBuilder()
-            .withEngineType(EngineType.FLINK)
-            .withPath(conf.getString(FlinkOptions.PATH))
-            .combineInput(conf.getBoolean(FlinkOptions.PRE_COMBINE), true)
-            .withMergeAllowDuplicateOnInserts(OptionsResolver.insertClustering(conf))
-            .withClusteringConfig(
-                HoodieClusteringConfig.newBuilder()
-                    .withAsyncClustering(conf.getBoolean(FlinkOptions.CLUSTERING_SCHEDULE_ENABLED))
-                    .withClusteringPlanStrategyClass(conf.getString(FlinkOptions.CLUSTERING_PLAN_STRATEGY_CLASS))
-                    .withClusteringPlanPartitionFilterMode(
-                        ClusteringPlanPartitionFilterMode.valueOf(conf.getString(FlinkOptions.CLUSTERING_PLAN_PARTITION_FILTER_MODE_NAME)))
-                    .withClusteringTargetPartitions(conf.getInteger(FlinkOptions.CLUSTERING_TARGET_PARTITIONS))
-                    .withClusteringMaxNumGroups(conf.getInteger(FlinkOptions.CLUSTERING_MAX_NUM_GROUPS))
-                    .withClusteringTargetFileMaxBytes(conf.getLong(FlinkOptions.CLUSTERING_PLAN_STRATEGY_TARGET_FILE_MAX_BYTES))
-                    .withClusteringPlanSmallFileLimit(conf.getLong(FlinkOptions.CLUSTERING_PLAN_STRATEGY_SMALL_FILE_LIMIT) * 1024 * 1024L)
-                    .withClusteringSkipPartitionsFromLatest(conf.getInteger(FlinkOptions.CLUSTERING_PLAN_STRATEGY_SKIP_PARTITIONS_FROM_LATEST))
-                    .withAsyncClusteringMaxCommits(conf.getInteger(FlinkOptions.CLUSTERING_DELTA_COMMITS))
-                    .build())
-            .withCleanConfig(HoodieCleanConfig.newBuilder()
-                .withAsyncClean(conf.getBoolean(FlinkOptions.CLEAN_ASYNC_ENABLED))
-                .retainCommits(conf.getInteger(FlinkOptions.CLEAN_RETAIN_COMMITS))
-                .cleanerNumHoursRetained(conf.getInteger(FlinkOptions.CLEAN_RETAIN_HOURS))
-                .retainFileVersions(conf.getInteger(FlinkOptions.CLEAN_RETAIN_FILE_VERSIONS))
-                // override and hardcode to 20,
-                // actually Flink cleaning is always with parallelism 1 now
-                .withCleanerParallelism(20)
-                .withCleanerPolicy(HoodieCleaningPolicy.valueOf(conf.getString(FlinkOptions.CLEAN_POLICY)))
-                .build())
-            .withArchivalConfig(HoodieArchivalConfig.newBuilder()
-                .archiveCommitsWith(conf.getInteger(FlinkOptions.ARCHIVE_MIN_COMMITS), conf.getInteger(FlinkOptions.ARCHIVE_MAX_COMMITS))
-                .build())
-            .withCompactionConfig(HoodieCompactionConfig.newBuilder()
-                .withTargetIOPerCompactionInMB(conf.getLong(FlinkOptions.COMPACTION_TARGET_IO))
-                .withInlineCompactionTriggerStrategy(
-                    CompactionTriggerStrategy.valueOf(conf.getString(FlinkOptions.COMPACTION_TRIGGER_STRATEGY).toUpperCase(Locale.ROOT)))
-                .withMaxNumDeltaCommitsBeforeCompaction(conf.getInteger(FlinkOptions.COMPACTION_DELTA_COMMITS))
-                .withMaxDeltaSecondsBeforeCompaction(conf.getInteger(FlinkOptions.COMPACTION_DELTA_SECONDS))
-                .build())
-            .withMemoryConfig(
-                HoodieMemoryConfig.newBuilder()
-                    .withMaxMemoryMaxSize(
-                        conf.getInteger(FlinkOptions.WRITE_MERGE_MAX_MEMORY) * 1024 * 1024L,
-                        conf.getInteger(FlinkOptions.COMPACTION_MAX_MEMORY) * 1024 * 1024L
-                    ).build())
-            .forTable(conf.getString(FlinkOptions.TABLE_NAME))
-            .withStorageConfig(HoodieStorageConfig.newBuilder()
-                .logFileDataBlockMaxSize(conf.getInteger(FlinkOptions.WRITE_LOG_BLOCK_SIZE) * 1024 * 1024)
-                .logFileMaxSize(conf.getLong(FlinkOptions.WRITE_LOG_MAX_SIZE) * 1024 * 1024)
-                .parquetBlockSize(conf.getInteger(FlinkOptions.WRITE_PARQUET_BLOCK_SIZE) * 1024 * 1024)
-                .parquetPageSize(conf.getInteger(FlinkOptions.WRITE_PARQUET_PAGE_SIZE) * 1024 * 1024)
-                .parquetMaxFileSize(conf.getInteger(FlinkOptions.WRITE_PARQUET_MAX_FILE_SIZE) * 1024 * 1024L)
-                .build())
-            .withMetadataConfig(HoodieMetadataConfig.newBuilder()
-                .enable(conf.getBoolean(FlinkOptions.METADATA_ENABLED))
-                .withMaxNumDeltaCommitsBeforeCompaction(conf.getInteger(FlinkOptions.METADATA_COMPACTION_DELTA_COMMITS))
-                .build())
-            .withPayloadConfig(getPayloadConfig(conf))
-            .withEmbeddedTimelineServerEnabled(enableEmbeddedTimelineService)
-            .withEmbeddedTimelineServerReuseEnabled(true) // make write client embedded timeline service singleton
-            .withAutoCommit(false)
-            .withAllowOperationMetadataField(conf.getBoolean(FlinkOptions.CHANGELOG_ENABLED))
-            .withProps(flinkConf2TypedProperties(conf))
-            .withSchema(getSourceSchema(conf).toString());
+  public static HoodieWriteConfig getHoodieClientConfig(Configuration conf, boolean enableEmbeddedTimelineService, boolean loadFsViewStorageConfig) {
+    HoodieWriteConfig.Builder builder = HoodieWriteConfig.newBuilder().withEngineType(EngineType.FLINK).withPath(conf.getString(FlinkOptions.PATH))
+        .combineInput(conf.getBoolean(FlinkOptions.PRE_COMBINE), true).withMergeAllowDuplicateOnInserts(OptionsResolver.insertClustering(conf))
+        .withClusteringConfig(HoodieClusteringConfig.newBuilder().withAsyncClustering(conf.getBoolean(FlinkOptions.CLUSTERING_SCHEDULE_ENABLED))
+            .withClusteringPlanStrategyClass(conf.getString(FlinkOptions.CLUSTERING_PLAN_STRATEGY_CLASS))
+            .withClusteringPlanPartitionFilterMode(ClusteringPlanPartitionFilterMode.valueOf(conf.getString(FlinkOptions.CLUSTERING_PLAN_PARTITION_FILTER_MODE_NAME)))
+            .withClusteringTargetPartitions(conf.getInteger(FlinkOptions.CLUSTERING_TARGET_PARTITIONS)).withClusteringMaxNumGroups(conf.getInteger(FlinkOptions.CLUSTERING_MAX_NUM_GROUPS))
+            .withClusteringTargetFileMaxBytes(conf.getLong(FlinkOptions.CLUSTERING_PLAN_STRATEGY_TARGET_FILE_MAX_BYTES))
+            .withClusteringPlanSmallFileLimit(conf.getLong(FlinkOptions.CLUSTERING_PLAN_STRATEGY_SMALL_FILE_LIMIT) * 1024 * 1024L)
+            .withClusteringSkipPartitionsFromLatest(conf.getInteger(FlinkOptions.CLUSTERING_PLAN_STRATEGY_SKIP_PARTITIONS_FROM_LATEST))
+            .withAsyncClusteringMaxCommits(conf.getInteger(FlinkOptions.CLUSTERING_DELTA_COMMITS)).build())
+        .withCleanConfig(HoodieCleanConfig.newBuilder().withAsyncClean(conf.getBoolean(FlinkOptions.CLEAN_ASYNC_ENABLED)).retainCommits(conf.getInteger(FlinkOptions.CLEAN_RETAIN_COMMITS))
+            .cleanerNumHoursRetained(conf.getInteger(FlinkOptions.CLEAN_RETAIN_HOURS)).retainFileVersions(conf.getInteger(FlinkOptions.CLEAN_RETAIN_FILE_VERSIONS))
+            // override and hardcode to 20,
+            // actually Flink cleaning is always with parallelism 1 now
+            .withCleanerParallelism(20).withCleanerPolicy(HoodieCleaningPolicy.valueOf(conf.getString(FlinkOptions.CLEAN_POLICY))).build())
+        .withArchivalConfig(HoodieArchivalConfig.newBuilder().archiveCommitsWith(conf.getInteger(FlinkOptions.ARCHIVE_MIN_COMMITS), conf.getInteger(FlinkOptions.ARCHIVE_MAX_COMMITS)).build())
+        .withCompactionConfig(HoodieCompactionConfig.newBuilder().withTargetIOPerCompactionInMB(conf.getLong(FlinkOptions.COMPACTION_TARGET_IO))
+            .withInlineCompactionTriggerStrategy(CompactionTriggerStrategy.valueOf(conf.getString(FlinkOptions.COMPACTION_TRIGGER_STRATEGY).toUpperCase(Locale.ROOT)))
+            .withMaxNumDeltaCommitsBeforeCompaction(conf.getInteger(FlinkOptions.COMPACTION_DELTA_COMMITS)).withMaxDeltaSecondsBeforeCompaction(conf.getInteger(FlinkOptions.COMPACTION_DELTA_SECONDS))
+            .build())
+        .withMemoryConfig(HoodieMemoryConfig.newBuilder()
+            .withMaxMemoryMaxSize(conf.getInteger(FlinkOptions.WRITE_MERGE_MAX_MEMORY) * 1024 * 1024L, conf.getInteger(FlinkOptions.COMPACTION_MAX_MEMORY) * 1024 * 1024L).build())
+        .forTable(conf.getString(FlinkOptions.TABLE_NAME))
+        .withStorageConfig(HoodieStorageConfig.newBuilder().logFileDataBlockMaxSize(conf.getInteger(FlinkOptions.WRITE_LOG_BLOCK_SIZE) * 1024 * 1024)
+            .logFileMaxSize(conf.getLong(FlinkOptions.WRITE_LOG_MAX_SIZE) * 1024 * 1024).parquetBlockSize(conf.getInteger(FlinkOptions.WRITE_PARQUET_BLOCK_SIZE) * 1024 * 1024)
+            .parquetPageSize(conf.getInteger(FlinkOptions.WRITE_PARQUET_PAGE_SIZE) * 1024 * 1024).parquetMaxFileSize(conf.getInteger(FlinkOptions.WRITE_PARQUET_MAX_FILE_SIZE) * 1024 * 1024L)
+            .parquetCompressionCodec(conf.getString(FlinkOptions.WRITE_PARQUET_COMPRESSION_CODEC_NAME)).parquetDictionaryEnabled(conf.getBoolean(FlinkOptions.WRITE_PARQUET_DICTIONARY_ENABLED))
+            .build())
+        .withMetadataConfig(HoodieMetadataConfig.newBuilder().enable(conf.getBoolean(FlinkOptions.METADATA_ENABLED))
+            .withMaxNumDeltaCommitsBeforeCompaction(conf.getInteger(FlinkOptions.METADATA_COMPACTION_DELTA_COMMITS)).build())
+        .withPayloadConfig(getPayloadConfig(conf)).withEmbeddedTimelineServerEnabled(enableEmbeddedTimelineService).withEmbeddedTimelineServerReuseEnabled(true) // make write client embedded timeline
+        // service singleton
+        .withAutoCommit(false).withAllowOperationMetadataField(conf.getBoolean(FlinkOptions.CHANGELOG_ENABLED)).withProps(flinkConf2TypedProperties(conf)).withSchema(getSourceSchema(conf).toString());
 
     if (conf.getBoolean(FlinkOptions.METADATA_ENABLED)) {
       builder.withWriteConcurrencyMode(WriteConcurrencyMode.OPTIMISTIC_CONCURRENCY_CONTROL);
       if (!conf.containsKey(HoodieLockConfig.LOCK_PROVIDER_CLASS_NAME.key())) {
-        builder.withLockConfig(HoodieLockConfig.newBuilder()
-            .withLockProvider(FileSystemBasedLockProvider.class)
-            .withLockWaitTimeInMillis(2000L) // 2s
+        builder.withLockConfig(HoodieLockConfig.newBuilder().withLockProvider(FileSystemBasedLockProvider.class).withLockWaitTimeInMillis(2000L) // 2s
             .withFileSystemLockExpire(1) // 1 minute
-            .withClientNumRetries(30)
-            .withFileSystemLockPath(StreamerUtil.getAuxiliaryPath(conf))
-            .build());
+            .withClientNumRetries(30).withFileSystemLockPath(StreamerUtil.getAuxiliaryPath(conf)).build());
       }
     }
 

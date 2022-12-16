@@ -614,7 +614,7 @@ public class HoodieAppendHandle<T extends HoodieRecordPayload, I, K, O> extends 
             keyField,
             writeConfig.getParquetCompressionCodec(),
             writeConfig.getParquetCompressionRatio(),
-            writeConfig.parquetDictionaryEnabled());
+            writeConfig.isParquetDictionaryEnabled());
       default:
         throw new HoodieException("Data block format " + logDataBlockFormat + " not implemented");
     }
