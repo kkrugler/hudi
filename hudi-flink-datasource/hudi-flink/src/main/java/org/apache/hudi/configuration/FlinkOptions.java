@@ -35,7 +35,7 @@ import org.apache.hudi.index.HoodieIndex;
 import org.apache.hudi.keygen.constant.KeyGeneratorOptions;
 import org.apache.hudi.keygen.constant.KeyGeneratorType;
 import org.apache.hudi.table.action.cluster.ClusteringPlanPartitionFilterMode;
-
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.Configuration;
@@ -492,11 +492,23 @@ public class FlinkOptions extends HoodieConfig {
           + "For DFS, this needs to be aligned with the underlying filesystem block size for optimal performance.");
 
   public static final ConfigOption<Integer> WRITE_PARQUET_PAGE_SIZE = ConfigOptions
-      .key("write.parquet.page.size")
-      .intType()
-      .defaultValue(1)
-      .withDescription("Parquet page size. Page is the unit of read within a parquet file. "
-          + "Within a block, pages are compressed separately.");
+          .key("write.parquet.page.size")
+          .intType()
+          .defaultValue(1)
+          .withDescription("Parquet page size. Page is the unit of read within a parquet file. "
+              + "Within a block, pages are compressed separately.");
+
+  public static final ConfigOption<String> WRITE_PARQUET_COMPRESSION_CODEC_NAME = ConfigOptions
+          .key("write.parquet.compression.codec")
+          .stringType()
+          .defaultValue(CompressionCodecName.GZIP.name())
+          .withDescription("Compression Codec for parquet files");
+
+  public static final ConfigOption<Boolean> WRITE_PARQUET_DICTIONARY_ENABLED = ConfigOptions
+          .key("write.parquet.dictionary.enabled")
+          .booleanType()
+          .defaultValue(true)
+          .withDescription("Parquet dictionary enabled.");
 
   public static final ConfigOption<Integer> WRITE_MERGE_MAX_MEMORY = ConfigOptions
       .key("write.merge.max_memory")

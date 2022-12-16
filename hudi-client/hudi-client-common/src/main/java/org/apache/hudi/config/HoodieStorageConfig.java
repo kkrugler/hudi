@@ -22,6 +22,7 @@ import org.apache.hudi.common.config.ConfigClassProperty;
 import org.apache.hudi.common.config.ConfigGroups;
 import org.apache.hudi.common.config.ConfigProperty;
 import org.apache.hudi.common.config.HoodieConfig;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -107,15 +108,15 @@ public class HoodieStorageConfig extends HoodieConfig {
       .withDocumentation("Expected compression of parquet data used by Hudi, when it tries to size new parquet files. "
           + "Increase this value, if bulk_insert is producing smaller than expected sized files");
 
-  // Default compression codec for parquet
+  // Default compression codec for Parquet
   public static final ConfigProperty<String> PARQUET_COMPRESSION_CODEC_NAME = ConfigProperty
       .key("hoodie.parquet.compression.codec")
-      .defaultValue("gzip")
+      .defaultValue(CompressionCodecName.GZIP.name())
       .withDocumentation("Compression Codec for parquet files");
 
-  public static final ConfigProperty<Boolean> PARQUET_DICTIONARY_ENABLED = ConfigProperty
+  public static final ConfigProperty<String> PARQUET_DICTIONARY_ENABLED = ConfigProperty
       .key("hoodie.parquet.dictionary.enabled")
-      .defaultValue(true)
+      .defaultValue("true")
       .withDocumentation("Whether to use dictionary encoding");
 
   public static final ConfigProperty<String> PARQUET_WRITE_LEGACY_FORMAT_ENABLED = ConfigProperty
@@ -334,6 +335,11 @@ public class HoodieStorageConfig extends HoodieConfig {
 
     public Builder parquetCompressionCodec(String parquetCompressionCodec) {
       storageConfig.setValue(PARQUET_COMPRESSION_CODEC_NAME, parquetCompressionCodec);
+      return this;
+    }
+
+    public Builder parquetDictionaryEnabled(boolean parquetDictionaryEnabled) {
+      storageConfig.setValue(PARQUET_DICTIONARY_ENABLED, Boolean.toString(parquetDictionaryEnabled));
       return this;
     }
 
