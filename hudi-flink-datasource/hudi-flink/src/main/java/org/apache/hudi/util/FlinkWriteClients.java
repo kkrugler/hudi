@@ -179,9 +179,15 @@ public class FlinkWriteClients {
             .build())
         .withMetadataConfig(HoodieMetadataConfig.newBuilder().enable(conf.getBoolean(FlinkOptions.METADATA_ENABLED))
             .withMaxNumDeltaCommitsBeforeCompaction(conf.getInteger(FlinkOptions.METADATA_COMPACTION_DELTA_COMMITS)).build())
-        .withPayloadConfig(getPayloadConfig(conf)).withEmbeddedTimelineServerEnabled(enableEmbeddedTimelineService).withEmbeddedTimelineServerReuseEnabled(true) // make write client embedded timeline
+        .withMarkersType(conf.getString(FlinkOptions.MARKERS_TYPE))
+        .withPayloadConfig(getPayloadConfig(conf))
+        .withEmbeddedTimelineServerEnabled(enableEmbeddedTimelineService)
+        .withEmbeddedTimelineServerReuseEnabled(true) // make write client embedded timeline
         // service singleton
-        .withAutoCommit(false).withAllowOperationMetadataField(conf.getBoolean(FlinkOptions.CHANGELOG_ENABLED)).withProps(flinkConf2TypedProperties(conf)).withSchema(getSourceSchema(conf).toString());
+        .withAutoCommit(false)
+        .withAllowOperationMetadataField(conf.getBoolean(FlinkOptions.CHANGELOG_ENABLED))
+        .withProps(flinkConf2TypedProperties(conf))
+        .withSchema(getSourceSchema(conf).toString());
 
     if (conf.getBoolean(FlinkOptions.METADATA_ENABLED)) {
       builder.withWriteConcurrencyMode(WriteConcurrencyMode.OPTIMISTIC_CONCURRENCY_CONTROL);

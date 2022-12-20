@@ -30,6 +30,7 @@ import org.apache.hudi.common.model.HoodieRecordMerger;
 import org.apache.hudi.common.model.HoodieTableType;
 import org.apache.hudi.common.model.WriteOperationType;
 import org.apache.hudi.common.table.HoodieTableConfig;
+import org.apache.hudi.common.table.marker.MarkerType;
 import org.apache.hudi.config.HoodieIndexConfig;
 import org.apache.hudi.config.HoodieWriteConfig;
 import org.apache.hudi.hive.MultiPartKeysValueExtractor;
@@ -554,10 +555,23 @@ public class FlinkOptions extends HoodieConfig {
       .withDescription("Whether to sort the inputs by specific fields for bulk insert tasks, default true");
 
   public static final ConfigOption<Integer> WRITE_SORT_MEMORY = ConfigOptions
-      .key("write.sort.memory")
-      .intType()
-      .defaultValue(128)
-      .withDescription("Sort memory in MB, default 128MB");
+          .key("write.sort.memory")
+          .intType()
+          .defaultValue(128)
+          .withDescription("Sort memory in MB, default 128MB");
+
+  public static final ConfigOption<String> MARKERS_TYPE = ConfigOptions
+          .key("hoodie.write.markers.type")
+          .stringType()
+          .defaultValue(MarkerType.TIMELINE_SERVER_BASED.toString())
+          .withDescription("Marker type to use.  Two modes are supported: "
+                  + "- DIRECT: individual marker file corresponding to each data file is directly "
+                  + "created by the writer. "
+                  + "- TIMELINE_SERVER_BASED: marker operations are all handled at the timeline service "
+                  + "which serves as a proxy.  New marker entries are batch processed and stored "
+                  + "in a limited number of underlying files for efficiency.  If HDFS is used or "
+                  + "timeline server is disabled, DIRECT markers are used as fallback even if this "
+                  + "is configure.");
 
   // ------------------------------------------------------------------------
   //  Compaction Options
