@@ -29,7 +29,7 @@
   <groupId>org.apache.hudi</groupId>
   <artifactId>hudi</artifactId>
   <packaging>pom</packaging>
-  <version>0.13.0-SNAPSHOT</version>
+  <version>0.13.0-bloomberg-SNAPSHOT</version>
   <description>Apache Hudi brings stream style processing on big data</description>
   <url>https://github.com/apache/hudi</url>
   <name>Hudi</name>
@@ -161,7 +161,7 @@
                modules being incorporated, hence we're creating multiple placeholders
                (hudi.spark.common.modules.*) -->
     <hudi.spark.common.modules.1>hudi-spark2-common</hudi.spark.common.modules.1>
-    <hudi.spark.common.modules.2/>
+    <hudi.spark.common.modules.2 />
     <avro.version>1.8.2</avro.version>
     <caffeine.version>2.9.1</caffeine.version>
     <scala11.version>2.11.12</scala11.version>
@@ -191,9 +191,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <main.basedir>${project.basedir}</main.basedir>
     <spark.bundle.hive.scope>provided</spark.bundle.hive.scope>
-    <spark.bundle.hive.shade.prefix/>
+    <spark.bundle.hive.shade.prefix />
     <utilities.bundle.hive.scope>provided</utilities.bundle.hive.scope>
-    <utilities.bundle.hive.shade.prefix/>
+    <utilities.bundle.hive.shade.prefix />
     <argLine>-Xmx2g</argLine>
     <jacoco.version>0.8.5</jacoco.version>
     <presto.bundle.bootstrap.scope>compile</presto.bundle.bootstrap.scope>
@@ -705,8 +705,7 @@
 
       <!-- Logging -->
       <!-- NOTE: All the following deps have to have "provided" scope to make sure these are not conflicting
-           w/ implementations that are using Hudi as a library. For ex, all Spark < 3.3 are still relying on Log4j1
-           and therefore if we be bringing Log4j2 bridge for V1 on the classpath (log4j-1.2-api), it'll fail w/
+           w/ implementations that are using Hudi as a library. For ex, all Spark < 3.3 are still relying on Log4j1 and therefore if we be bringing Log4j2 bridge for V1 on the classpath (log4j-1.2-api), it'll fail w/
            `ClassNotFoundException`, since the bridge would be expecting Log4j2 impl be present -->
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>

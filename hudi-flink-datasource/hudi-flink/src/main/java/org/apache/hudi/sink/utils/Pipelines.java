@@ -114,6 +114,7 @@ public class Pipelines {
       if (conf.getBoolean(FlinkOptions.WRITE_BULK_INSERT_SORT_INPUT)) {
         SortOperatorGen sortOperatorGen = BucketBulkInsertWriterHelper.getFileIdSorterGen(rowTypeWithFileId);
         dataStream = dataStream.transform("file_sorter", typeInfo, sortOperatorGen.createSortOperator())
+            .uid(opUID("file_sorter", conf))
             .setParallelism(conf.getInteger(FlinkOptions.WRITE_TASKS)); // same parallelism as write task to avoid shuffle
         ExecNodeUtil.setManagedMemoryWeight(dataStream.getTransformation(),
             conf.getInteger(FlinkOptions.WRITE_SORT_MEMORY) * 1024L * 1024L);
@@ -123,6 +124,7 @@ public class Pipelines {
           .uid(opUID("bucket_bulk_insert", conf))
           .setParallelism(conf.getInteger(FlinkOptions.WRITE_TASKS))
           .addSink(DummySink.INSTANCE)
+          .uid(opUID("dummy", conf))
           .name("dummy");
     }
 
@@ -145,6 +147,7 @@ public class Pipelines {
             .transform("partition_key_sorter",
                 InternalTypeInfo.of(rowType),
                 sortOperatorGen.createSortOperator())
+            .uid(opUID("partition_key_sorter", conf))
             .setParallelism(conf.getInteger(FlinkOptions.WRITE_TASKS));
         ExecNodeUtil.setManagedMemoryWeight(dataStream.getTransformation(),
             conf.getInteger(FlinkOptions.WRITE_SORT_MEMORY) * 1024L * 1024L);
@@ -154,9 +157,11 @@ public class Pipelines {
         .transform(opName("hoodie_bulk_insert_write", conf),
             TypeInformation.of(Object.class),
             operatorFactory)
+        .uid(opUID("hoodie_bulk_insert_write", conf))
         // follow the parallelism of upstream operators to avoid shuffle
         .setParallelism(conf.getInteger(FlinkOptions.WRITE_TASKS))
         .addSink(DummySink.INSTANCE)
+        .uid(opUID("dummy", conf))
         .name("dummy");
   }
 
@@ -196,7 +201,7 @@ public class Pipelines {
 
     return dataStream
         .transform(opName("hoodie_append_write", conf), TypeInformation.of(Object.class), operatorFactory)
-        .uid(opUID("hoodie_stream_write", conf))
+        .uid(opUID("hoodie_append_write", conf))
         .setParallelism(conf.getInteger(FlinkOptions.WRITE_TASKS));
   }
 
@@ -252,8 +257,8 @@ public class Pipelines {
               "index_bootstrap",
               TypeInformation.of(HoodieRecord.class),
               new BootstrapOperator<>(conf))
-          .setParallelism(conf.getOptional(FlinkOptions.INDEX_BOOTSTRAP_TASKS).orElse(dataStream1.getParallelism()))
-          .uid(opUID("index_bootstrap", conf));
+          .uid(opUID("index_bootstrap", conf))
+          .setParallelism(conf.getOptional(FlinkOptions.INDEX_BOOTSTRAP_TASKS).orElse(dataStream1.getParallelism()));
     }
 
     return dataStream1;
@@ -278,8 +283,8 @@ public class Pipelines {
             "batch_index_bootstrap",
             TypeInformation.of(HoodieRecord.class),
             new BatchBootstrapOperator<>(conf))
-        .setParallelism(conf.getOptional(FlinkOptions.INDEX_BOOTSTRAP_TASKS).orElse(dataStream.getParallelism()))
-        .uid(opUID("batch_index_bootstrap", conf));
+        .uid(opUID("batch_index_bootstrap", conf))
+        .setParallelism(conf.getOptional(FlinkOptions.INDEX_BOOTSTRAP_TASKS).orElse(dataStream.getParallelism()));
   }
 
   /**
@@ -365,6 +370,7 @@ public class Pipelines {
     return dataStream.transform("compact_plan_generate",
             TypeInformation.of(CompactionPlanEvent.class),
             new CompactionPlanOperator(conf))
+        .uid(opUID("compact_plan_generator", conf))
         .setParallelism(1) // plan generate must be singleton
         // make the distribution strategy deterministic to avoid concurrent modifications
         // on the same bucket files
@@ -372,8 +378,10 @@ public class Pipelines {
         .transform("compact_task",
             TypeInformation.of(CompactionCommitEvent.class),
             new CompactOperator(conf))
+        .uid(opUID("compact_task", conf))
         .setParallelism(conf.getInteger(FlinkOptions.COMPACTION_TASKS))
         .addSink(new CompactionCommitSink(conf))
+        .uid(opUID("compact_commit", conf))
         .name("compact_commit")
         .setParallelism(1); // compaction commit should be singleton
   }
@@ -403,6 +411,7 @@ public class Pipelines {
     DataStream<ClusteringCommitEvent> clusteringStream = dataStream.transform("cluster_plan_generate",
             TypeInformation.of(ClusteringPlanEvent.class),
             new ClusteringPlanOperator(conf))
+        .uid(opUID("clustering_plan_generate", conf))
         .setParallelism(1) // plan generate must be singleton
         .keyBy(plan ->
             // make the distribution strategy deterministic to avoid concurrent modifications
@@ -412,18 +421,21 @@ public class Pipelines {
         .transform("clustering_task",
             TypeInformation.of(ClusteringCommitEvent.class),
             new ClusteringOperator(conf, rowType))
+        .uid(opUID("clustering_task", conf))
         .setParallelism(conf.getInteger(FlinkOptions.CLUSTERING_TASKS));
     if (OptionsResolver.sortClusteringEnabled(conf)) {
       ExecNodeUtil.setManagedMemoryWeight(clusteringStream.getTransformation(),
           conf.getInteger(FlinkOptions.WRITE_SORT_MEMORY) * 1024L * 1024L);
     }
     return clusteringStream.addSink(new ClusteringCommitSink(conf))
+        .uid(opUID("clustering_commit", conf))
         .name("clustering_commit")
         .setParallelism(1); // compaction commit should be singleton
   }
 
   public static DataStreamSink<Object> clean(Configuration conf, DataStream<Object> dataStream) {
     return dataStream.addSink(new CleanFunction<>(conf))
+        .uid(opUID("clean_commits", conf))
         .setParallelism(1)
         .name("clean_commits");
   }

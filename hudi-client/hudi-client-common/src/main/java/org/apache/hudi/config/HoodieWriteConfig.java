@@ -1819,7 +1819,7 @@ public class HoodieWriteConfig extends HoodieConfig {
     return CompressionCodecName.fromConf(StringUtils.isNullOrEmpty(codecName) ? null : codecName);
   }
 
-  public boolean parquetDictionaryEnabled() {
+  public boolean isParquetDictionaryEnabled() {
     return getBoolean(HoodieStorageConfig.PARQUET_DICTIONARY_ENABLED);
   }
 

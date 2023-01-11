@@ -30,6 +30,7 @@ import org.apache.hudi.common.model.HoodieRecordMerger;
 import org.apache.hudi.common.model.HoodieTableType;
 import org.apache.hudi.common.model.WriteOperationType;
 import org.apache.hudi.common.table.HoodieTableConfig;
+import org.apache.hudi.common.table.marker.MarkerType;
 import org.apache.hudi.config.HoodieIndexConfig;
 import org.apache.hudi.config.HoodieWriteConfig;
 import org.apache.hudi.hive.MultiPartKeysValueExtractor;
@@ -38,7 +39,7 @@ import org.apache.hudi.index.HoodieIndex;
 import org.apache.hudi.keygen.constant.KeyGeneratorOptions;
 import org.apache.hudi.keygen.constant.KeyGeneratorType;
 import org.apache.hudi.table.action.cluster.ClusteringPlanPartitionFilterMode;
-
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.Configuration;
@@ -509,11 +510,23 @@ public class FlinkOptions extends HoodieConfig {
           + "For DFS, this needs to be aligned with the underlying filesystem block size for optimal performance.");
 
   public static final ConfigOption<Integer> WRITE_PARQUET_PAGE_SIZE = ConfigOptions
-      .key("write.parquet.page.size")
-      .intType()
-      .defaultValue(1)
-      .withDescription("Parquet page size. Page is the unit of read within a parquet file. "
-          + "Within a block, pages are compressed separately.");
+          .key("write.parquet.page.size")
+          .intType()
+          .defaultValue(1)
+          .withDescription("Parquet page size. Page is the unit of read within a parquet file. "
+              + "Within a block, pages are compressed separately.");
+
+  public static final ConfigOption<String> WRITE_PARQUET_COMPRESSION_CODEC_NAME = ConfigOptions
+          .key("write.parquet.compression.codec")
+          .stringType()
+          .defaultValue(CompressionCodecName.GZIP.name())
+          .withDescription("Compression Codec for parquet files");
+
+  public static final ConfigOption<Boolean> WRITE_PARQUET_DICTIONARY_ENABLED = ConfigOptions
+          .key("write.parquet.dictionary.enabled")
+          .booleanType()
+          .defaultValue(true)
+          .withDescription("Parquet dictionary enabled.");
 
   public static final ConfigOption<Integer> WRITE_MERGE_MAX_MEMORY = ConfigOptions
       .key("write.merge.max_memory")
@@ -542,10 +555,23 @@ public class FlinkOptions extends HoodieConfig {
       .withDescription("Whether to sort the inputs by specific fields for bulk insert tasks, default true");
 
   public static final ConfigOption<Integer> WRITE_SORT_MEMORY = ConfigOptions
-      .key("write.sort.memory")
-      .intType()
-      .defaultValue(128)
-      .withDescription("Sort memory in MB, default 128MB");
+          .key("write.sort.memory")
+          .intType()
+          .defaultValue(128)
+          .withDescription("Sort memory in MB, default 128MB");
+
+  public static final ConfigOption<String> MARKERS_TYPE = ConfigOptions
+          .key("hoodie.write.markers.type")
+          .stringType()
+          .defaultValue(MarkerType.TIMELINE_SERVER_BASED.toString())
+          .withDescription("Marker type to use.  Two modes are supported: "
+                  + "- DIRECT: individual marker file corresponding to each data file is directly "
+                  + "created by the writer. "
+                  + "- TIMELINE_SERVER_BASED: marker operations are all handled at the timeline service "
+                  + "which serves as a proxy.  New marker entries are batch processed and stored "
+                  + "in a limited number of underlying files for efficiency.  If HDFS is used or "
+                  + "timeline server is disabled, DIRECT markers are used as fallback even if this "
+                  + "is configure.");
 
   // ------------------------------------------------------------------------
   //  Compaction Options
