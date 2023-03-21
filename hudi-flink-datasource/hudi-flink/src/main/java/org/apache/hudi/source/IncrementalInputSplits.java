@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -159,7 +160,7 @@ public class IncrementalInputSplits implements Serializable {
     if (fullTableScan) {
       // scans the partitions and files directly.
       FileIndex fileIndex = getFileIndex();
-      readPartitions = new HashSet<>(fileIndex.getOrBuildPartitionPaths());
+      readPartitions = new TreeSet<>(fileIndex.getOrBuildPartitionPaths());
       if (readPartitions.size() == 0) {
         LOG.warn("No partitions found for reading in user provided path.");
         return Result.EMPTY;
