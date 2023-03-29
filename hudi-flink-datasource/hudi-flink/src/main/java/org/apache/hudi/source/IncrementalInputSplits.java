@@ -57,7 +57,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -187,7 +186,7 @@ public class IncrementalInputSplits implements Serializable {
         fullTableScan = true;
         // reading from the earliest, scans the partitions and files directly.
         FileIndex fileIndex = getFileIndex();
-        readPartitions = new HashSet<>(fileIndex.getOrBuildPartitionPaths());
+        readPartitions = new TreeSet<>(fileIndex.getOrBuildPartitionPaths());
         if (readPartitions.size() == 0) {
           LOG.warn("No partitions found for reading in user provided path.");
           return Result.EMPTY;
@@ -271,7 +270,7 @@ public class IncrementalInputSplits implements Serializable {
     if (instantRange == null) {
       // reading from the earliest, scans the partitions and files directly.
       FileIndex fileIndex = getFileIndex();
-      readPartitions = new HashSet<>(fileIndex.getOrBuildPartitionPaths());
+      readPartitions = new TreeSet<>(fileIndex.getOrBuildPartitionPaths());
       if (readPartitions.size() == 0) {
         LOG.warn("No partitions found for reading under path: " + path);
         return Result.EMPTY;
